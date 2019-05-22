@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import it.polito.tdp.porto.model.Author;
 import it.polito.tdp.porto.model.Paper;
@@ -15,7 +18,7 @@ public class PortoDAO {
 	 */
 	public Author getAutore(int id) {
 
-		final String sql = "SELECT * FROM author where id=?";
+		final String sql = "SELECT * FROM author where id=? ";
 
 		try {
 			Connection conn = DBConnect.getConnection();
@@ -37,6 +40,75 @@ public class PortoDAO {
 			throw new RuntimeException("Errore Db");
 		}
 	}
+	
+	public List <Author> getTuttiAutori( ){
+		
+		final String sql = "SELECT * FROM author ";
+		List <Author> result = new ArrayList<Author>();
+
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+	
+
+			ResultSet rs = st.executeQuery();
+
+			while(rs.next()) {
+				
+				Author autore = new Author(rs.getInt("id"), rs.getString("lastname"), rs.getString("firstname"));
+				result.add(autore);
+				
+				
+			}
+
+			conn.close();
+			
+			
+			return result;
+
+		} catch (SQLException e) {
+			// e.printStackTrace();
+			throw new RuntimeException("Errore Db");
+		}
+		
+		
+	}
+	
+	public List <Author> getCoautori (Author autoreSelezionato){
+		//seleziono le info dell'autore da due tagb creator che contengono due id diversi per autore ma stesso eprint
+		//l'id dell'autore 1 deve essere quello passato come parametro e l'id del primo autore è diverso da quello del secondo 
+		
+		String sql = "SELECT DISTINCT a2.id, a2.lastname, a2.firstname "+
+				"FROM creator c1, creator c2, author a2 "+
+				"WHERE c1.eprintid = c2.eprintid "+
+				"AND c2.authorid = a2.id AND c1.authorid = ? AND a2.id <> c1.authorid "+
+				"ORDER BY a2.lastname ASC, a2.firstname ASC ";
+		
+		Connection conn = DBConnect.getConnection() ;
+		
+		List<Author> result = new ArrayList<>() ;
+		
+		try {
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setInt(1, autoreSelezionato.getId());
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				
+				result.add(new Author(res.getInt("id"), res.getString("lastname"), res.getString("firstname"))) ;
+			}
+			
+			conn.close();
+			return result ;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+	}
+	
+	
+
 
 	/*
 	 * Dato l'id ottengo l'articolo.
@@ -64,5 +136,43 @@ public class PortoDAO {
 			 e.printStackTrace();
 			throw new RuntimeException("Errore Db");
 		}
+	}
+
+	public List <Paper> getPaperDiAutori(Integer idA1, Integer idA2) {
+		//controllo che abbiano un articolo in comune
+		//prendo l'articolo 
+		
+		String sql = "SELECT eprintid_PAPER, title, issn, publication, TYPE, types " + 
+				"FROM creator c1, creator c2, paper " + 
+				"WHERE c1.eprintid = c2.eprintid  " + 
+				"AND c1.authorid = ? AND c2.authorid = ? " + 
+				"AND c1.eprintid = p.eprintid_PAPER " + 
+				"AND c2.eprintid = p.eprintid_PAPER ";
+		Connection conn = DBConnect.getConnection() ;
+		
+		List<Paper> result = new ArrayList<Paper>() ;
+		
+		try {
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setInt(1, idA1);
+			st.setInt(1, idA2);
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				
+				result.add(new Paper(res.getInt("eprintid_PAPER"), res.getString("title"), res.getString("issn"),res.getString("publication"),res.getString("TYPE"),res.getString("types"))) ;
+			}
+			
+			conn.close();
+			
+			return result;
+		
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+		
+		
 	}
 }
