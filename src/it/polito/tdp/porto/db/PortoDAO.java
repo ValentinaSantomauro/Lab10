@@ -43,14 +43,15 @@ public class PortoDAO {
 	
 	public List <Author> getTuttiAutori( ){
 		
-		final String sql = "SELECT * FROM author ";
+		final String sql = "SELECT id, lastname, firstname "+
+				 " FROM author "+
+				"ORDER BY lastname ASC, firstname ASC ";
 		List <Author> result = new ArrayList<Author>();
+		Connection conn = DBConnect.getConnection();
 
 		try {
-			Connection conn = DBConnect.getConnection();
+			
 			PreparedStatement st = conn.prepareStatement(sql);
-	
-
 			ResultSet rs = st.executeQuery();
 
 			while(rs.next()) {
@@ -81,7 +82,9 @@ public class PortoDAO {
 		String sql = "SELECT DISTINCT a2.id, a2.lastname, a2.firstname "+
 				"FROM creator c1, creator c2, author a2 "+
 				"WHERE c1.eprintid = c2.eprintid "+
-				"AND c2.authorid = a2.id AND c1.authorid = ? AND a2.id <> c1.authorid "+
+				"AND c2.authorid = a2.id "
+				+ "AND c1.authorid = ? "
+				+ "AND a2.id <> c1.authorid "+
 				"ORDER BY a2.lastname ASC, a2.firstname ASC ";
 		
 		Connection conn = DBConnect.getConnection() ;
@@ -138,7 +141,7 @@ public class PortoDAO {
 		}
 	}
 
-	public List <Paper> getPaperDiAutori(Integer idA1, Integer idA2) {
+	public Paper getPaperDiAutori(Integer idA1, Integer idA2) {
 		//controllo che abbiano un articolo in comune
 		//prendo l'articolo 
 		
@@ -147,10 +150,11 @@ public class PortoDAO {
 				"WHERE c1.eprintid = c2.eprintid  " + 
 				"AND c1.authorid = ? AND c2.authorid = ? " + 
 				"AND c1.eprintid = p.eprintid_PAPER " + 
-				"AND c2.eprintid = p.eprintid_PAPER ";
+				"AND c2.eprintid = p.eprintid_PAPER "+
+				"LIMIT 1";
 		Connection conn = DBConnect.getConnection() ;
 		
-		List<Paper> result = new ArrayList<Paper>() ;
+		
 		
 		try {
 			PreparedStatement st = conn.prepareStatement(sql) ;
@@ -158,14 +162,15 @@ public class PortoDAO {
 			st.setInt(1, idA2);
 			ResultSet res = st.executeQuery() ;
 			
-			while(res.next()) {
-				
-				result.add(new Paper(res.getInt("eprintid_PAPER"), res.getString("title"), res.getString("issn"),res.getString("publication"),res.getString("TYPE"),res.getString("types"))) ;
+			Paper p =null; 
+			if(res.next()) {
+				//c'è almeno un articolo...ritornalo!
+				p = new Paper(res.getInt("eprintid_PAPER"), res.getString("title"), res.getString("issn"),res.getString("publication"),res.getString("TYPE"),res.getString("types")) ;
 			}
 			
 			conn.close();
 			
-			return result;
+			return p;
 		
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
