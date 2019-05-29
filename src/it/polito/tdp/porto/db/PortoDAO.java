@@ -145,13 +145,13 @@ public class PortoDAO {
 		//controllo che abbiano un articolo in comune
 		//prendo l'articolo 
 		
-		String sql = "SELECT eprintid_PAPER, title, issn, publication, TYPE, types " + 
-				"FROM creator c1, creator c2, paper " + 
-				"WHERE c1.eprintid = c2.eprintid  " + 
-				"AND c1.authorid = ? AND c2.authorid = ? " + 
-				"AND c1.eprintid = p.eprintid_PAPER " + 
-				"AND c2.eprintid = p.eprintid_PAPER "+
-				"LIMIT 1";
+		String sql = "SELECT paper.eprintid, title, issn, publication, type, types\n" + 
+				"				FROM paper, creator c1, creator c2 \n" + 
+				"				WHERE paper.eprintid=c1.eprintid \n" + 
+				"				AND paper.eprintid=c2.eprintid \n" + 
+				"				AND c1.authorid= ?\n" + 
+				"				AND c2.authorid=?\n" + 
+				"				LIMIT 1";
 		Connection conn = DBConnect.getConnection() ;
 		
 		
@@ -159,13 +159,13 @@ public class PortoDAO {
 		try {
 			PreparedStatement st = conn.prepareStatement(sql) ;
 			st.setInt(1, idA1);
-			st.setInt(1, idA2);
+			st.setInt(2, idA2);
 			ResultSet res = st.executeQuery() ;
 			
 			Paper p =null; 
 			if(res.next()) {
 				//c'è almeno un articolo...ritornalo!
-				p = new Paper(res.getInt("eprintid_PAPER"), res.getString("title"), res.getString("issn"),res.getString("publication"),res.getString("TYPE"),res.getString("types")) ;
+				p = new Paper(res.getInt("eprintid"), res.getString("title"), res.getString("issn"),res.getString("publication"),res.getString("TYPE"),res.getString("types")) ;
 			}
 			
 			conn.close();
